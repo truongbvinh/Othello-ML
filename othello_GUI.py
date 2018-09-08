@@ -267,7 +267,7 @@ class othello_GUI:
 		Rebinds keys and goes on to next phase which allows player to set peices
 		"""
 		board = []
-		for i in range(self._height):
+		for _ in range(self._height):
 			board.append([0] * self._width)
 
 		self._othello_game = othello_logic.Othello(self._rows_setter.get(), 
@@ -296,7 +296,7 @@ class othello_GUI:
 		self._white_setup["relief"] = "sunken"
 		self._black_setup["relief"] = "raised"
 
-	def _clear_pieces(self) -> None:
+	def _clear_pieces_function(self) -> None:
 		"""
 		Function for if the user pressed the "Clear" button, clears the pieces and redraws
 		"""
@@ -321,7 +321,7 @@ class othello_GUI:
 		self._white_setup = tkinter.Button(self._settings_frame, text = "White", font = 30,
 			command = self._white_pressed)
 		self._clear_pieces = tkinter.Button(self._settings_frame, text = "Clear", font = 30,
-			command = self._clear_pieces)
+			command = self._clear_pieces_function)
 		self._settings_done = tkinter.Button(self._settings_frame, text = "Done", font = 30,
 			command = self._start_game)
 		self._black_setup.grid(row = 0, column = 0, padx = 10, pady = 10)

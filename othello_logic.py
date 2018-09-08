@@ -31,7 +31,7 @@ class Othello:
 	FULL_OR_SIM = "FULL"
 
 	#################### INIT FUNCTIONS ###############################
-	def __init__(self, rows: int, cols: int, first: str, style: str, board: [str]):
+	def __init__(self, rows: int, cols: int, first: str, style: str, board=None):
 		"""
 		Initializes the board, first player, win condition based on the imput
 		"""
@@ -43,6 +43,13 @@ class Othello:
 		self.COLS = cols
 		self.current_player = self._first_player(first)
 		self.STYLE = style
+		if board == None:
+			board = self._create_board(rows, cols)
+			board[rows//2][cols//2]=1
+			board[rows//2 +1][cols//2 +1]=1
+			board[rows//2 +1][cols//2]=2
+			board[rows//2][cols//2 +1]=2
+			self.print_board()
 		self._set_board(board)
 
 
@@ -58,7 +65,7 @@ class Othello:
 		elif rows % 2 == 1 or cols % 2 == 1:
 			raise InvalidBoardError
 
-		for i in range(rows):
+		for _ in range(rows):
 			board.append([0]*cols)
 
 		return board
