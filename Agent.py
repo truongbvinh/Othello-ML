@@ -9,7 +9,6 @@ import sys
 import os
 import othello_logic as oth
 from math import log2
-from heap import maxHeap
 from tensorflow import keras
 # from heap import maxHeap
 
@@ -33,7 +32,7 @@ class Agent(object):
         self.generation += 1
 
     def train(self):
-        data = self.generate_training_set(10, True)
+        data = self.generate_training_set(100, True)
         print("Generation", self.generation)
         self.model.fit(data[0], data[1], epochs=1)
         self._increment_generation()
@@ -70,6 +69,7 @@ class Agent(object):
         train = []
         target = []
         scores = []
+        score_index = []
         counter = 0
 
         # game.print_board()
@@ -110,32 +110,20 @@ class Agent(object):
                     break
 
                 except oth.InvalidMoveError:
-                    train.append(game.game)
-                    scores.append(0)
-                    target.append((predictions, moves[move_index+attempt][1]))
+                    predictions[moves[move_index+attempt][1]] = 0
                     # If the move is invalid, then try the next valid move
                     attempt -= 1
             
             if move_index+attempt == -1:
                 break
             
+            predictions[moves[move_index+attempt][1]] = score / 12
+            
             train.append(game.game)
-            scores.append(score)
-            target.append((predictions, moves[move_index+attempt][1]))
-
+            target.append(predictions)
             game = game_copy
         
-        scores = (self.discount(scores, self.gamma, False))
-        scores = scores / 24
-        for i in range(len(scores)):
-            temp = target[i][0]
-            temp[target[i][1]] = scores[i]
-            target[i] = temp
         return (train,target)
-        
-            
-
-
 
     def save_model(self):
         self.model.save(self.checkpoint_dir)
@@ -180,7 +168,7 @@ class Agent(object):
         """
 
         model = keras.Sequential([
-            keras.layers.Flatten(),
+            keras.layers.Flatten(input_shape=(self.dimension, self.dimension)),
             keras.layers.Dense(64, activation=tf.nn.relu),
 
             keras.layers.Dense(256, activation = tf.nn.relu),
@@ -202,6 +190,9 @@ class Agent(object):
 
 if __name__ == "__main__":
     agent = Agent()
-    while True:
-        agent.train()
-        print("Generation:", agent.generation)
+    try:
+        while True:
+            agent.train()
+            print("Generation:", agent.generation)
+    except KeyboardInterrupt:
+        agent.save_model()
