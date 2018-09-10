@@ -1,4 +1,6 @@
-# Vinh Truong 88812807, Lab Section 9
+# Vinh Truong
+
+import numpy as np
 
 class InvalidMoveError(Exception):
 	pass
@@ -31,7 +33,7 @@ class Othello:
 	FULL_OR_SIM = "FULL"
 
 	#################### INIT FUNCTIONS ###############################
-	def __init__(self, rows: int, cols: int, first: str, style: str, board=None):
+	def __init__(self, rows: int, cols: int, first: str, style: str, board=[]):
 		"""
 		Initializes the board, first player, win condition based on the imput
 		"""
@@ -43,15 +45,25 @@ class Othello:
 		self.COLS = cols
 		self.current_player = self._first_player(first)
 		self.STYLE = style
-		if board == None:
-			board = self._create_board(rows, cols)
+		if board == []:
+			board = self.game
+			board[rows//2 -1][cols//2 -1]=1
 			board[rows//2][cols//2]=1
-			board[rows//2 +1][cols//2 +1]=1
-			board[rows//2 +1][cols//2]=2
-			board[rows//2][cols//2 +1]=2
-			self.print_board()
+			board[rows//2][cols//2 -1]=2
+			board[rows//2 -1][cols//2]=2
+			# self.print_board()
 		self._set_board(board)
-
+	
+	def copy(self):
+		result = Othello(self.ROWS, self.COLS, Othello.REFER[self.current_player], self.STYLE, self.game)
+		return result
+	
+	def flip_board(self):
+		for row in range(self.ROWS):
+			for col in range(self.COLS):
+				if self.game[row][col] == 1:
+					self.game[row][col] = 4
+				self.game[row][col] //= 2
 
 	def _create_board(self, rows: int, cols: int) -> [[int]]:
 		"""
@@ -66,9 +78,9 @@ class Othello:
 			raise InvalidBoardError
 
 		for _ in range(rows):
-			board.append([0]*cols)
+			board.append(np.array([0]*cols))
 
-		return board
+		return np.array(board)
 
 	def _check_row_col(self, row: int, col: int):
 		"""
@@ -109,6 +121,7 @@ class Othello:
 		Sets the object's board based on a string which will represent the
 		board
 		"""
+		# print(board, self.game)
 		if len(board) > len(self.game):
 			raise InvalidSizeError
 
@@ -118,11 +131,11 @@ class Othello:
 				raise InvalidSizeError
 
 			for col in range(len(self.game[row])):
-				if board[row][col] == ".":
+				if board[row][col] == "." or board[row][col] == 0:
 					self.game[row][col] = 0
-				elif board[row][col] == "B":
+				elif board[row][col] == "B" or board[row][col] == 1:
 					self.game[row][col] = 1
-				elif board[row][col] == "W":
+				elif board[row][col] == "W" or board[row][col] == 2:
 					self.game[row][col] = 2
 
 
@@ -269,8 +282,9 @@ class Othello:
 		if self.board_is_full():
 			raise GameFinishedError
 
+		# Uses 1 based indexing, NOT 0 based indexing
 		move[0] = (int)(move[0]) - 1
-		move[1] = (int)(move[1]) - 1 # user enters the first row as 1, not 0
+		move[1] = (int)(move[1]) - 1
 
 		self._make_move(move[0], move[1])
 
@@ -326,6 +340,15 @@ class Othello:
 		pieces = self._count_pieces()
 		b = pieces[0]
 		w = pieces[1]
+
+		game_copy = self.copy()
+		game_copy.flip_board()
+
+		for spot in range(self.ROWS*self.COLS):
+			row, col = spot//self.ROWS, spot%self.COLS
+			if len(self.placement_is_valid(row, col)) > 0 or len(game_copy.placement_is_valid(row, col)) > 0:
+				return None
+				
 
 		if self.STYLE == ">":
 			if b > w:
