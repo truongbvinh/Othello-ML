@@ -27,8 +27,8 @@ class Agent(object):
         self._increment_generation()
     
     def _increment_generation(self):
-        if self.epsilon > 0.1:
-            self.epsilon = 1/log2(self.generation/2+2)
+        if self.epsilon > 0.1 and self.generation > 100:
+            self.epsilon = 1/log2((self.generation - 100)/2+2)
         self.generation += 1
 
     def train(self):
@@ -51,8 +51,10 @@ class Agent(object):
         for _ in range(num_elements-1):
             percent_done += 1
             temp = self.generate_training_info(verbose)
-            result[train].extend(temp[train])
-            result[target].extend(temp[target])
+            if len(temp[train]) > len(result[train]):
+                result[train] = temp[train]
+                result[target] = temp[target]
+            
             print("Generating... {}%\r".format((percent_done*100)//num_elements))
         
         print("Finished!")
@@ -83,9 +85,11 @@ class Agent(object):
                     game_copy.print_board()
                     game_copy.flip_board()
             print()
+            
             predictions = self.model.predict(game_copy.game.reshape(1, 8, 8))[0]
             moves = list(zip(predictions, range(self.board_size)))
             moves.sort(key=lambda x: x[0], reverse=True)
+            print(moves[:5])
             move_index = random.randint(0, int(self.epsilon*self.board_size-1))
 
             score = None
@@ -117,12 +121,12 @@ class Agent(object):
             if move_index+attempt == -1:
                 break
             
-            predictions[moves[move_index+attempt][1]] = score / 12
+            predictions[moves[move_index+attempt][1]] = 1.0
             
             train.append(game.game)
             target.append(predictions)
             game = game_copy
-        
+
         return (train,target)
 
     def save_model(self):
@@ -170,15 +174,16 @@ class Agent(object):
         model = keras.Sequential([
             keras.layers.Flatten(input_shape=(self.dimension, self.dimension)),
             keras.layers.Dense(64, activation=tf.nn.relu),
+            keras.layers.Dropout(0.6),
 
             keras.layers.Dense(256, activation = tf.nn.relu),
-            # keras.layers.Dropout(0.6),
+            keras.layers.Dropout(0.6),
 
             keras.layers.Dense(512, activation = tf.nn.relu),
-            # keras.layers.Dropout(0.6),
+            keras.layers.Dropout(0.6),
 
             keras.layers.Dense(256, activation = tf.nn.relu),
-            # keras.layers.Dropout(0.6),
+            keras.layers.Dropout(0.6),
 
             keras.layers.Dense(64, activation = tf.nn.softmax)
         ])
